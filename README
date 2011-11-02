@@ -1,0 +1,21 @@
+nginx strftime module
+=====================
+
+Nginx module to write `strftime` formatted time to a nginx conf variable.
+
+
+Example using `echo nginx module <https://github.com/agentzh/echo-nginx-module>`::
+
+    location /year {
+        strftime year "%Y";
+        echo $year;
+    }
+
+    location /date {
+        strftime date "%Y-%m-%d";
+        echo $date;
+    }
+
+
+It should output "2011" for /year, and "2011-10-02" for /date.
+

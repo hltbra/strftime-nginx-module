@@ -3,6 +3,11 @@
 #include <ngx_http.h>
 #define DATE_MAX_LEN 30
 
+typedef struct {
+    u_char *date_fmt;
+} ngx_http_strftime_loc_conf_t;
+
+
 ngx_int_t
 strftime_now(ngx_http_variable_value_t *var, ngx_http_request_t *pool)
 {
@@ -27,8 +32,25 @@ strftime_now(ngx_http_variable_value_t *var, ngx_http_request_t *pool)
     return NGX_OK;
 }
 
+
 ngx_int_t
 var_get_handler(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data);
+
+
+static char *
+ngx_http_strftime_create_loc_conf(ngx_conf_t *cf) {
+    ngx_http_strftime_loc_conf_t *new_conf;
+
+    new_conf = ngx_palloc(cf->pool, sizeof(ngx_http_strftime_loc_conf_t));
+    if (new_conf == NULL) {
+        return NGX_ERROR;
+    }
+
+    new_conf->date_fmt = (u_char *)"%Y-%m-%d";
+
+    return new_conf;
+}
+
 
 static char *
 ngx_http_strftime(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
@@ -40,7 +62,7 @@ ngx_http_strftime(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     var_name.data = params[1].data;
     var_name.len = params[1].len;
  
-    v = ngx_http_add_variable(cf, &var_name, NGX_HTTP_VAR_CHANGEABLE);
+    v = ngx_http_add_variable(cf, &var_name, NGX_HTTP_VAR_NOCACHEABLE);
     v->get_handler = var_get_handler;
     return NGX_CONF_OK;
 }
@@ -59,17 +81,17 @@ static ngx_command_t ngx_http_strftime_commands[] = {
 
 
 static ngx_http_module_t ngx_http_strftime_module_ctx = {
-    NULL,
-    NULL,
+    NULL,                                  /* preconfiguration */
+    NULL,                                  /* postconfiguration */
 
-    NULL,
-    NULL,
+    NULL,                                  /* create main configuration */
+    NULL,                                  /* init main configuration */
 
-    NULL,
-    NULL,
+    NULL,                                  /* create server configuration */
+    NULL,                                  /* merge server configuration */
 
-    NULL,
-    NULL
+    ngx_http_strftime_create_loc_conf,     /* create location configuration */
+    NULL                                   /* merge location configuration */
 };
 
 ngx_module_t ngx_http_strftime_module = {
@@ -90,6 +112,8 @@ ngx_module_t ngx_http_strftime_module = {
 ngx_int_t
 var_get_handler(ngx_http_request_t *r, ngx_http_variable_value_t *var, uintptr_t data)
 {
+    ngx_http_strftime_loc_conf_t  *cf;
+    cf = ngx_http_get_module_loc_conf(r, ngx_http_strftime_module);
     return strftime_now(var, r->pool);
 }
 

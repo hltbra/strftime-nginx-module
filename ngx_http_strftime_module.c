@@ -9,7 +9,7 @@ typedef struct {
 
 
 ngx_int_t
-strftime_now(ngx_http_variable_value_t *var, ngx_http_request_t *pool)
+strftime_now(ngx_http_variable_value_t *var, u_char *date_fmt, ngx_http_request_t *pool)
 {
     struct tm *ptr;
     time_t now;
@@ -18,7 +18,7 @@ strftime_now(ngx_http_variable_value_t *var, ngx_http_request_t *pool)
     now = time(NULL);
     ptr = localtime(&now);
 
-    var->len = strftime(buf, DATE_MAX_LEN, "%M", ptr);
+    var->len = strftime(buf, DATE_MAX_LEN, (char *)date_fmt, ptr);
     if (var->len == 0) {
         return NGX_ERROR;
     }
@@ -114,6 +114,6 @@ var_get_handler(ngx_http_request_t *r, ngx_http_variable_value_t *var, uintptr_t
 {
     ngx_http_strftime_loc_conf_t  *cf;
     cf = ngx_http_get_module_loc_conf(r, ngx_http_strftime_module);
-    return strftime_now(var, r->pool);
+    return strftime_now(var, cf->date_fmt, r->pool);
 }
 

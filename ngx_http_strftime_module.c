@@ -9,7 +9,7 @@ typedef struct {
 
 
 ngx_int_t
-strftime_now(ngx_http_variable_value_t *var, u_char *date_fmt, ngx_http_request_t *pool)
+strftime_now(ngx_http_variable_value_t *var, u_char *date_fmt, ngx_pool_t *pool)
 {
     struct tm *ptr;
     time_t now;
@@ -37,13 +37,13 @@ ngx_int_t
 var_get_handler(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data);
 
 
-static char *
+static void *
 ngx_http_strftime_create_loc_conf(ngx_conf_t *cf) {
     ngx_http_strftime_loc_conf_t *new_conf;
 
     new_conf = ngx_palloc(cf->pool, sizeof(ngx_http_strftime_loc_conf_t));
     if (new_conf == NULL) {
-        return NGX_ERROR;
+        return NGX_CONF_ERROR;
     }
 
     new_conf->date_fmt = (u_char *)"%Y-%m-%d";
@@ -65,7 +65,7 @@ ngx_http_strftime(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
     ltcf->date_fmt = ngx_palloc(cf->pool, params[2].len);
     if (ltcf->date_fmt == NULL) {
-        return NGX_ERROR;
+        return NGX_CONF_ERROR;
     }
     ngx_memcpy(ltcf->date_fmt, params[2].data, params[2].len);
  

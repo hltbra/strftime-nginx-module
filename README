@@ -11,9 +11,11 @@ Nginx module to write `strftime` formatted time to a nginx conf variable.
 
     location /date {
         strftime date "%Y-%m-%d";
-        return 200 "$date\n";
+        strftime hours "%H";
+        strftime minutes "%M";
+        return 200 "It's $hours hours and $minutes minutes of $date\n";
     }
 
 
-It should output "2011" for /year, and "2011-10-02" for /date.
+It should output "2011" for /year, and "It's 09 hours and 34 minutes of 2011-10-02" for /date.
 

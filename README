@@ -3,14 +3,14 @@ nginx strftime module
 
 Nginx module to write `strftime` formatted time to a nginx conf variable.
 
+    strftime year "%Y";
+    strftime date "%Y-%m-%d";
 
     location /year {
-        strftime year "%Y";
         return 200 "$year\n";
     }
 
     location /date {
-        strftime date "%Y-%m-%d";
         strftime hours "%H";
         strftime minutes "%M";
         return 200 "It's $hours hours and $minutes minutes of $date\n";

@@ -63,12 +63,13 @@ ngx_http_strftime(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     var_name.data = params[1].data;
     var_name.len = params[1].len;
 
-    ltcf->date_fmt = ngx_palloc(cf->pool, params[2].len);
+    ltcf->date_fmt = ngx_palloc(cf->pool, params[2].len + 1);
     if (ltcf->date_fmt == NULL) {
         return NGX_CONF_ERROR;
     }
     ngx_memcpy(ltcf->date_fmt, params[2].data, params[2].len);
- 
+    ltcf->date_fmt[params[2].len] = '\0';
+
     v = ngx_http_add_variable(cf, &var_name, NGX_HTTP_VAR_NOCACHEABLE);
     v->get_handler = var_get_handler;
     return NGX_CONF_OK;

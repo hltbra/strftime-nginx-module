@@ -93,6 +93,10 @@ ngx_http_strftime(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     ctx->date_fmt[date_fmt.len] = '\0';
 
     v = ngx_http_add_variable(cf, &var_name, NGX_HTTP_VAR_NOCACHEABLE);
+    if (v == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
     v->get_handler = ngx_http_strftime_time_variable;
     v->data = (uintptr_t) ctx;
 

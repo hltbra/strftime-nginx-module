@@ -7,6 +7,8 @@ Nginx module to write `strftime` formatted time to a nginx conf variable.
     strftime date "%Y-%m-%d";
     strftime local_time "%H:%M:%S";
     strftime gmt_time "%H:%M:%S" gmt;
+    strftime gmt_time "%H:%M:%S" gmt "arg_timestamp"; # Getting from variable called timestamp.
+    strftime gmt_time "%H:%M:%S" gmt 144567890; # Getting from timestamp.
 
     location /year {
         return 200 "$year\n";

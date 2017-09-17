@@ -7,6 +7,8 @@
 typedef struct {
     ngx_uint_t    gmt;
     u_char       *date_fmt;
+    ngx_str_t     timestamp_arg;
+    time_t        timestamp;
 } ngx_http_strftime_ctx_t;
 
 
@@ -16,7 +18,7 @@ ngx_int_t    ngx_http_strftime_time_variable(ngx_http_request_t *r, ngx_http_var
 
 static ngx_command_t ngx_http_strftime_commands[] = {
     {ngx_string("strftime"),
-     NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE23,
+     NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_2MORE,
      ngx_http_strftime,
      0,
      0,
@@ -83,6 +85,14 @@ ngx_http_strftime(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
         return NGX_CONF_ERROR;
     }
 
+
+    if (cf->args->nelts > 4) {
+        ctx->timestamp_arg = args[4];
+    } else {
+        ctx->timestamp_arg.data = NULL;
+        ctx->timestamp_arg.len = 0;
+    }
+
     ctx->date_fmt = ngx_palloc(cf->pool, date_fmt.len + 1);
     if (ctx->date_fmt == NULL) {
         return NGX_CONF_ERROR;
@@ -105,11 +115,17 @@ ngx_http_strftime(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
 
 ngx_int_t
-strftime_now(ngx_http_variable_value_t *var, u_char *date_fmt, ngx_uint_t gmt, ngx_pool_t *pool)
+strftime_now(ngx_http_variable_value_t *var, time_t timestamp, u_char *date_fmt, ngx_uint_t gmt, ngx_pool_t *pool)
 {
     struct tm    tm;
-    time_t       now = ngx_time();
+    time_t       now;
     char         buf[DATE_MAX_LEN];
+
+    if (timestamp > -1) {
+	    now = timestamp;
+    } else {
+        now = ngx_time();
+    }
 
     if (var->len != 0) {
         return NGX_OK;
@@ -143,6 +159,24 @@ strftime_now(ngx_http_variable_value_t *var, u_char *date_fmt, ngx_uint_t gmt, n
 ngx_int_t
 ngx_http_strftime_time_variable(ngx_http_request_t *r, ngx_http_variable_value_t *var, uintptr_t data)
 {
+    ngx_str_t                timestamp_arg;
     ngx_http_strftime_ctx_t *ctx = (ngx_http_strftime_ctx_t *) data;
-    return strftime_now(var, ctx->date_fmt, ctx->gmt, r->pool);
+
+    timestamp_arg = ctx->timestamp_arg;
+
+    if (timestamp_arg.data != NULL && timestamp_arg.len > 0) {
+        // First check if we have this var name in the request.
+        ngx_int_t hash = ngx_hash_key(ctx->timestamp_arg.data, timestamp_arg.len);
+        ngx_http_variable_value_t * arg_timestamp_var = ngx_http_get_variable(r, &timestamp_arg, hash);
+
+        if( arg_timestamp_var && !arg_timestamp_var->not_found && arg_timestamp_var->valid) {
+            ctx->timestamp = ngx_atotm(arg_timestamp_var->data, arg_timestamp_var->len);
+        } else {
+            ctx->timestamp = ngx_atotm(timestamp_arg.data, timestamp_arg.len);
+        }
+    } else {
+        ctx->timestamp = -1;
+    }
+
+    return strftime_now(var, ctx->timestamp, ctx->date_fmt, ctx->gmt, r->pool);
 }
